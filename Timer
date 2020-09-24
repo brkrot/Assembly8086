@@ -1,0 +1,294 @@
+;Dovi Twersky	203528021
+;Barak Roth 	203679725
+;****************************
+;		|Timer On Screen|	*
+;		Programm structure:	*
+;		-----------------	*
+;		1. main				*
+;		2.updateTimer		*
+;		3.print_mSec		*
+;		4.print_Sec			*
+;		5.print_Min			*
+;		6.PrintGraphicTimer	*
+;		7.printText			*
+;		7.printBlank		*
+;		8.PrintDigits		*
+;****************************
+.model small
+.stack 100h
+.data		
+		OldOff dw 0									;variable to save old offset-ip of the ISR
+		OldSeg dw 0                            		;variable to save old segment-cs of the ISR
+		title_time db 'Min : Sec : mSec', '$'		;The string for the graphic timer
+		real_time db  '00  : 00  : 000', '$'		;The string for the graphic timer
+		text db  '"Computers are good at following instructions, but not at reading them"',0Ah, 0Dh,' - Donald Knuth', '$'		;The string for the text
+		blank db '                                                                                                  ','$'		;The string for blank 
+		real_bx dw 0
+.code  
+.startup
+	
+	;setting data segment
+	mov bx, @data
+	mov ds,bx
+	
+	call PrintGraphicTimer  ;Printing the graphics for the timer
+	
+	; ; B save the old ISR adress in 2 defined variables
+	mov ah, 35h 			; save the old-ISR IP
+	mov al,08h				;value for reading the interrupt
+	int 21h					;do it
+	mov OldOff, bx			;put 08 interrupt CS in oldoff
+	mov OldSeg, es			;put 08 interrupt CS in oldSeg
+	
+	push ds
+	;D update the IVT to the adress of new ISR
+	cli 						; can’t allow interrupts during the change
+	mov ah,25h					;value for writing the interrupt
+	mov al,08h					;timer interrupt number
+	mov bx, seg updateTimer		;put function segmant in |BX|
+	mov ds, bx					;Mov |BX| in |DS|
+    mov dx, offset updateTimer  ;put function offset in |BX|
+    int 21h						;do it
+	xor bx,bx
+	sti	
+	pop ds
+	 xor bp,bp		
+	;setting extra segment to screen memory               
+	mov ax, 0b800h  
+    mov es, ax
+
+	;Endless loop
+	mov si,3
+	mov real_bx,0h
+	l_1:	
+	 	
+	 call printText
+	 mov cx,900d
+	 push cx
+	 call DELAY
+	 call printBlank
+	 mov cx,100d
+	 push cx
+	 call DELAY
+	 cmp si ,0h
+	 jne l_1
+	 
+;Go back to os
+.exit
+
+; ********************************************************************************
+; 								DELAY - Updating the timer
+; ********************************************************************************	
+	
+DELAY PROC NEAR
+pop si		
+pop cx
+push si
+times:	
+		;Waiting a second
+		mov di,1D39h;01cf0h 
+	wait100msec:
+		NOP
+		dec di
+		cmp di,0h
+		jnz wait100msec ; takes about 0.1sec @5MHZ
+ loop times
+ RET
+DELAY ENDP
+
+; ********************************************************************************
+; 							updateTimer - Updating the timer
+; ********************************************************************************	
+	
+updateTimer PROC NEAR
+push ax
+push bx
+push cx
+push dx
+push di
+	mov bx,real_bx
+	pushf					; save the fagls (cuase oldOff do iret)
+	call DWORD PTR [oldoff]	; JMP to the old 08h
+	add bp,55d				;In every iteration the counter increses in 55 mSec
+	call print_mSec			;print_mSec and update SECONDS (if neccery)
+	mov real_bx,bx
+pop di
+pop dx
+pop cx
+pop bx
+pop ax
+	iret
+updateTimer ENDP
+
+; ********************************************************************************
+; 			print_mSec - print the microSeconds and update the Seconds
+; ********************************************************************************	
+print_mSec PROC NEAR
+	
+	cmp BP,1000d		;If we have more than 1000 mSec so reset it and update Seconds
+	jb not_1000			;if the mSec is not bigger from 100 then jump to not_1000
+	sub BP,1000d		;|DX|  = DX - 1000
+	call print_Sec		;call print_Sec
+not_1000:
+	; printing the mSec
+	mov ax,BP			;we must div using |AX| 
+	mov cx, 10d			;|CX| (the divider) is 10
+	xor dx,dx			;|DX| = 0
+	div cx				;Ax=993>>	Ax/10=ax=99	;dx=Ax%10=3
+	mov dh,0fh			;Set color of the printed text
+	add dl,'0'			;Adding the value of '0' =(30 in the ascii table)
+	push dx				;Backup dx for the printing
+	push ax				;push the 2 digit num for the print_num process
+	mov si,4dah 		;set the offset for the printing
+	call PrintDigits	;call PrintDigits
+	pop dx 				;Restore dx for the printing
+	mov es:[4deh],dx	;print the right digit to the screen
+	ret
+print_mSec ENDP
+
+; ********************************************************************************
+; 				print_Sec - print the Seconds and update the Minutes
+; ********************************************************************************	
+print_Sec PROC NEAR
+	add bl,1d 			;increase the seconds counter
+	cmp bl,60d			;If we have more than 60 Sec so reset it and update Minutes
+	jb not_60s			;if it is not bigger then 60 so jump forward
+	sub bl,60			;|BL|  = BL - 60  - reset the Seconds counter into real seconds value
+	call print_Min		;call print_Min
+not_60s:	 
+	; printing the sec
+	mov di, bx
+	xor bh,bh
+	push bx
+	mov bx,di			;push the 2 digit num for the print_num process
+	mov si,4ceh			;set the offset for the printing
+	call PrintDigits	;call PrintDigits
+	ret
+print_Sec ENDP
+
+; ********************************************************************************
+; 							print_Min - print the minits
+; ********************************************************************************	
+print_Min PROC NEAR
+	
+	add bh,1d			;increase the minutes counter		
+	cmp bh,60d			;If we have more than 60 Sec so reset it and update minutes
+	jb not_60m			;if miutes counter is not bigger then 60 so jump forward
+	xor bh,bh			;set |BH| to 0
+not_60m:	 
+	; printing the min
+					;push the 2 digit num for the print_num process
+
+	mov di, bx
+	mov bl,bh
+	xor bh,bh
+	push bx
+	mov bx,di
+	mov si,4c2h			;set the offset for the printing
+	call PrintDigits	;call PrintDigits
+	ret
+print_Min ENDP
+
+;********************************************************************************
+;			PrintGraphicTimer - print the graphic base for the timer
+;********************************************************************************	
+ PrintGraphicTimer PROC NEAR
+	
+	 ; Set the curser position
+	 mov dh, 6d			;Set the row
+	 mov dl, 49d		;Set the colum
+	 mov bh, 0			;Set the 
+	 mov ah, 2			;Set the 
+	 int 10h 
+	
+	 ; print 00:00:00
+	 mov dx, offset title_time
+	 mov ah, 9
+	 int 21h
+	
+	; Set the curser position
+	 mov dh, 7d
+	 mov dl, 49d
+	 mov bh, 0
+	 mov ah, 2
+	 int 10h 
+	
+	 ; print Min : Sec : mSec
+	 mov dx, offset real_time
+	 mov ah, 9
+	 int 21h
+	 ret
+ PrintGraphicTimer ENDP
+ 
+;********************************************************************************
+;				PrintText - print the graphic base for the timer
+;********************************************************************************	
+ printText PROC NEAR
+	 ; Set the curser position
+	 mov dh, 2d			;Set the row
+	 mov dl, 0d		;Set the colum
+	 mov bh, 0			;Set the 
+	 mov ah, 2			;Set the 
+	 int 10h 
+	 
+	 ;print text
+	 mov dx, offset text
+	 mov ah, 9
+	 int 21h
+	 
+	 ret
+ printText ENDP	
+ 
+;********************************************************************************
+;				printBlank - print the graphic base for the timer
+;********************************************************************************	
+ printBlank PROC NEAR
+	; Set the curser position
+	 mov dh, 2d
+	 mov dl, 0d
+	 mov bh, 0
+	 mov ah, 2
+	 int 10h 
+	
+	 ; print blank
+	 mov dx, offset blank
+	 mov ah, 9
+	 int 21h
+	 ret
+ printBlank ENDP
+
+;********************************************************************************
+;				PrintDigits - print the graphic digits to the screen
+;parameters
+;we get the offset on the screen  - |SI|
+;we get the data in the stack
+;********************************************************************************	
+PrintDigits PROC NEAR
+	pop cx			;Get the return address
+	pop ax			;get the data
+	push cx			;Set back the return address
+	
+	xor di,di 		;|DI| =0
+l_loop:	
+	xor dx,dx		;Set |DX| to 0
+	mov cx, 10d		;cx (the divider) is 10
+	div cx			;Ax=2653>>	Ax/10=ax=265	;dx=Ax%10=3
+	push dx			;saving the mod result in the stack (single digit)
+	inc di			;loop counter
+	cmp di,2h		;The max length of the number will be 2 digits(for mSec)
+	jb l_loop		;if you did 2 digit  dont jump backwards
+	
+	;Printing the number to the screen
+	mov cx,2h			;initial cx to loop twice
+still_printing:
+	pop ax				;put the upper value within the stack, into |AX|
+	mov ah,0fh			;Set color for the printing
+	add ax,'0'			;Adding the value of '0' =(30 in the ascii table)
+	mov es:[si],ax		;print the digit using the offset |SI| 
+	dec cx				;Decrease the loop counter		
+	add si, 2h			;Set the offset for the next letter location
+	cmp cx,0			;Check the loop condition
+	jnz still_printing	;Jump back if we still need to print
+	ret	
+PrintDigits ENDP
+end
