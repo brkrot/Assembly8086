@@ -7,6 +7,11 @@ It is a 16-bit Microprocessor having 20 address lines and 16
 data lines that provides up to 1MB storage).
 
 
+Markup : * Bullet list
+              * Nested bullet
+                  * Sub-nested bullet etc
+          * Bullet list item 2
+
 ##Timer On Screen##
 Programm structure:	
 -----------------	
