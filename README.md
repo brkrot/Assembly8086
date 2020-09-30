@@ -1,4 +1,4 @@
-# AssemblyCoding
+# AssemblyCoding#
 
 All of this files are bunch of assembly code that works on a 8086 proccesor  
 (8086 Microprocessor is an enhanced version of 
@@ -7,7 +7,7 @@ It is a 16-bit Microprocessor having 20 address lines and 16
 data lines that provides up to 1MB storage).
 
 
-#Timer On Screen
+##Timer On Screen##
 Programm structure:	
 -----------------	
 1. main	code\n
