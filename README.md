@@ -7,10 +7,10 @@ It is a 16-bit Microprocessor having 20 address lines and 16
 data lines that provides up to 1MB storage).
 
 
-##Timer On Screen|	
+#Timer On Screen
 Programm structure:	
 -----------------	
-1. main	code			
+1. main	code\n
 2.updateTimer		
 3.print_mSec		
 4.print_Sec			
@@ -23,4 +23,6 @@ Programm structure:
 
 
 #The 8086 micro-proccesor structre
+
+
 ![alt text](https://electronicsdesk.com/wp-content/uploads/2019/03/block-diagram-of-8086-microprocessor-1.jpg)
