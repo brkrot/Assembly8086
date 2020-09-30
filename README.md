@@ -7,11 +7,11 @@ It is a 16-bit Microprocessor having 20 address lines and 16
 data lines that provides up to 1MB storage).
 
 
-1. #Timer On Screen#
+1. Timer On Screen
   1. main	code
   2.updateTimer		
   3.print_mSec		
-  4.print_Sec			
+  4.print_Sec
   5.print_Min			
   6.PrintGraphicTimer	
   7.printText	
