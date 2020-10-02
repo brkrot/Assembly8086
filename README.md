@@ -26,7 +26,7 @@ The methods are:
 
 ### How to run the files
 
-In order to run the files you need to download the *** + [LNK]
+In order to run the files you need to download the *** + [install8086]
 
 Install the dependencies and devDependencies and start the server.
 
@@ -69,4 +69,5 @@ MIT
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
    [LNK]: <https://github.com/brkrot/Assembly8086/edit/master/README.md>
+   [install8086]: <https://computertipsbymkg.blogspot.com/2015/04/how-to-install-masm-8086-on-your.html>
  
