@@ -2,11 +2,13 @@
 
 
 
-##### All of this files are bunch of assembly code that works on a 8086 proccesor ##### 
+##### All of this files are bunch of assembly codes that runs no a 8086 proccesor/virtual 
 8086 Microprocessor is an enhanced version of 
 8085 Microprocessor that was designed by Intel in 1976.
 It is a 16-bit Microprocessor having 20 address lines and 16 
 data lines that provides up to 1MB storage.
+
+
 
 ## Timer ##
 explanation about the code
